@@ -8,7 +8,7 @@ services:
       python manage.py migrate
       python create_superuser.py
       python seed_data.py
-    startCommand: gunicorn moviebooking.wsgi --log-file -
+    startCommand: gunicorn moviebooking.wsgi:application --log-file -
     envVars:
       - key: SECRET_KEY
         generateValue: true
