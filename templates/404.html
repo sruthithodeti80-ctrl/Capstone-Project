@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}404 - Page Not Found | CinePrime{% endblock %}
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+  <div class="text-center fade-in">
+    <div class="display-1 fw-bold text-accent-red mb-0" style="font-size:10rem;line-height:1;text-shadow:0 0 60px rgba(239,68,68,0.5);">404</div>
+    <h2 class="font-heading fw-bold text-white mt-3 mb-2">Reel Not Found</h2>
+    <p class="text-muted-custom lead mb-4">The page you're looking for has left the cinema.<br>Check the URL or head back to the lobby.</p>
+    <div class="d-flex gap-3 justify-content-center">
+      <a href="{% url 'home' %}" class="btn btn-gradient-red rounded-pill px-5 py-2">
+        <i class="bi bi-house me-2"></i>Go Home
+      </a>
+      <a href="{% url 'movie_list' %}" class="btn btn-outline-custom rounded-pill px-5 py-2">
+        <i class="bi bi-film me-2"></i>Browse Movies
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

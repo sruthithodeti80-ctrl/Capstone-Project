@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CinePrime | Book Movies, Watch Cinema, Review Films{% endblock %}
+
+{% block content %}
+<!-- Hero Section / Carousel -->
+<section class="hero-section">
+  <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
+    <div class="carousel-indicators">
+      {% for movie in now_showing %}
+        {% if forloop.counter <= 5 %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+          class="{% if forloop.first %}active{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+        {% endif %}
+      {% empty %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+      {% endfor %}
+    </div>
+    <div class="carousel-inner">
+      {% for movie in now_showing %}
+        {% if forloop.counter <= 5 %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+          <div class="hero-slide" style="background-image: url('{{ movie.banner_url|default:movie.poster_url }}');">
+            <div class="hero-overlay">
+              <div class="container">
+                <div class="row">
+                  <div class="col-lg-6 fade-in">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                      {% for g in movie.genre_list %}
+                        <span class="badge genre-badge">{{ g }}</span>
+                      {% endfor %}
+                      <span class="badge bg-dark border border-secondary text-secondary">{{ movie.rating_class }}</span>
+                    </div>
+                    <h1 class="display-4 fw-bold text-white mb-2">{{ movie.title }}</h1>
+                    <p class="text-muted-custom mb-3">{{ movie.description|truncatewords:20 }}</p>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                      <div class="d-flex align-items-center gap-1">
+                        <i class="bi bi-star-fill text-accent-gold"></i>
+                        <span class="fw-bold">{{ movie.average_rating }}</span>
+                        <span class="text-muted-custom">/5</span>
+                      </div>
+                      <span class="text-muted-custom">|</span>
+                      <span class="text-muted-custom"><i class="bi bi-clock me-1"></i>{{ movie.duration_minutes }} min</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3">
+                      <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-gradient-red rounded-pill px-4 py-2">
+                        <i class="bi bi-play-circle me-2"></i>View Details
+                      </a>
+                      {% with movie.showtimes.first as st %}
+                        {% if st %}
+                        <a href="{% url 'seat_booking' st.pk %}" class="btn btn-outline-custom rounded-pill px-4 py-2">
+                          <i class="bi bi-ticket-perforated me-2"></i>Book Now
+                        </a>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      {% empty %}
+      <div class="carousel-item active">
+        <div class="hero-slide" style="background: linear-gradient(135deg, #1e293b, #0f172a);">
+          <div class="hero-overlay">
+            <div class="container text-center py-5">
+              <i class="bi bi-film text-accent-red" style="font-size: 5rem;"></i>
+              <h1 class="display-4 fw-bold mt-3">Welcome to CinePrime</h1>
+              <p class="lead text-muted-custom">Premium cinema booking experience</p>
+              <a href="/admin/" class="btn btn-gradient-red rounded-pill px-5 py-2 mt-3">Add Movies via Admin</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
+</section>
+
+<!-- Now Showing Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="font-heading fw-bold mb-0">
+        <span class="text-accent-red">●</span> Now Showing
+      </h2>
+      <a href="{% url 'movie_list' %}?showing=now" class="btn btn-sm btn-outline-custom rounded-pill px-4">View All</a>
+    </div>
+    <div class="row g-4">
+      {% for movie in now_showing %}
+      <div class="col-lg-2 col-md-3 col-sm-4 col-6 fade-in">
+        <a href="{% url 'movie_detail' movie.pk %}" class="text-decoration-none">
+          <div class="glass-card card-hover-effect overflow-hidden h-100">
+            <div class="position-relative overflow-hidden" style="height: 220px;">
+              <img src="{{ movie.poster_url }}" class="w-100 h-100 object-fit-cover" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/300x450/1e293b/ef4444?text={{ movie.title|urlencode }}'">
+              <div class="position-absolute top-0 start-0 m-2">
+                <span class="badge" style="background: linear-gradient(135deg,#ef4444,#f97316); font-size:0.65rem;">NOW SHOWING</span>
+              </div>
+              <div class="position-absolute bottom-0 end-0 m-2">
+                <span class="badge bg-dark bg-opacity-75 text-accent-gold"><i class="bi bi-star-fill me-1"></i>{{ movie.average_rating }}</span>
+              </div>
+            </div>
+            <div class="p-2 text-center">
+              <p class="fw-bold text-white mb-0 small">{{ movie.title|truncatechars:20 }}</p>
+              <p class="text-muted-custom mb-0" style="font-size: 0.75rem;">{{ movie.genre|truncatechars:20 }}</p>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center py-5 text-muted-custom">
+        <i class="bi bi-camera-reels fs-1 mb-3 d-block"></i>
+        <p>No movies currently showing. <a href="/admin/movies/movie/add/" class="text-accent-red">Add via Admin</a></p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Popular / Top Rated Movies Section -->
+<section class="py-5" style="background: rgba(0,0,0,0.3);">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="font-heading fw-bold mb-0">
+        <span class="text-accent-gold">★</span> Top Rated Films
+      </h2>
+      <a href="{% url 'movie_list' %}" class="btn btn-sm btn-outline-custom rounded-pill px-4">Browse All</a>
+    </div>
+    <div class="row g-4">
+      {% for movie in popular_movies %}
+      <div class="col-lg-4 col-md-6 fade-in">
+        <div class="glass-card card-hover-effect p-0 overflow-hidden">
+          <div class="d-flex">
+            <div style="width: 100px; min-height: 140px; flex-shrink: 0; overflow: hidden;">
+              <img src="{{ movie.poster_url }}" class="w-100 h-100 object-fit-cover" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/100x140/1e293b/ef4444?text={{ movie.title|urlencode }}'">
+            </div>
+            <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
+              <div>
+                <h6 class="fw-bold text-white mb-1">{{ movie.title }}</h6>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  {% for g in movie.genre_list %}
+                    <span class="badge genre-badge small">{{ g }}</span>
+                  {% endfor %}
+                </div>
+                <p class="text-muted-custom small mb-0">{{ movie.description|truncatewords:12 }}</p>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="star-display">
+                  {% for i in "12345" %}
+                    <i class="bi bi-star{% if forloop.counter <= movie.average_rating %}-fill text-accent-gold{% else %} text-secondary{% endif %} small"></i>
+                  {% endfor %}
+                  <span class="text-accent-gold ms-1 fw-bold small">{{ movie.average_rating }}</span>
+                </div>
+                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-gradient-red btn-sm rounded-pill px-3">Details</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center py-4 text-muted-custom">
+        <p>No rated movies yet.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Latest Reviews Section -->
+<section class="py-5" id="latest-reviews">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="font-heading fw-bold mb-0">
+        <i class="bi bi-chat-quote-fill text-accent-red me-2"></i>Community Reviews
+      </h2>
+    </div>
+    <div class="row g-4">
+      {% for review in latest_reviews %}
+      <div class="col-lg-3 col-md-6 fade-in">
+        <div class="glass-card h-100 p-4">
+          <div class="d-flex gap-1 mb-3">
+            {% for i in "12345" %}
+              <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill text-accent-gold{% else %} text-secondary{% endif %}"></i>
+            {% endfor %}
+          </div>
+          <p class="text-muted-custom fst-italic mb-3">"{{ review.comment|truncatewords:20 }}"</p>
+          <div class="d-flex align-items-center gap-2 mt-auto">
+            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:36px;height:36px;background:linear-gradient(135deg,#ef4444,#f97316);flex-shrink:0;">
+              {{ review.reviewer_name|slice:":1"|upper }}
+            </div>
+            <div>
+              <p class="fw-bold text-white mb-0 small">{{ review.reviewer_name }}</p>
+              <p class="text-muted-custom mb-0 small">on <a href="{% url 'movie_detail' review.movie.pk %}" class="text-accent-red text-decoration-none">{{ review.movie.title|truncatechars:20 }}</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center py-4 text-muted-custom">
+        <i class="bi bi-chat-dots fs-1 mb-3 d-block"></i>
+        <p>No reviews yet. Be the first to review a movie!</p>
+        <a href="{% url 'movie_list' %}" class="btn btn-gradient-red rounded-pill px-4">Browse Movies</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Recently Added Section -->
+<section class="py-5" style="background: rgba(0,0,0,0.3);">
+  <div class="container">
+    <h2 class="font-heading fw-bold mb-4">
+      <i class="bi bi-lightning-fill text-accent-gold me-2"></i>Recently Added
+    </h2>
+    <div class="row g-4">
+      {% for movie in recent_movies %}
+      <div class="col-lg-2 col-md-3 col-sm-4 col-6 fade-in">
+        <a href="{% url 'movie_detail' movie.pk %}" class="text-decoration-none">
+          <div class="glass-card card-hover-effect overflow-hidden h-100">
+            <div class="position-relative overflow-hidden" style="height: 200px;">
+              <img src="{{ movie.poster_url }}" class="w-100 h-100 object-fit-cover" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/300x450/1e293b/f59e0b?text={{ movie.title|urlencode }}'">
+              <div class="position-absolute bottom-0 start-0 end-0 p-2" style="background: linear-gradient(to top, rgba(15,23,42,0.9),transparent);">
+                <p class="text-white fw-bold mb-0 small">{{ movie.title|truncatechars:22 }}</p>
+                <p class="text-muted-custom mb-0" style="font-size:0.7rem;">{{ movie.release_date|date:"M Y" }}</p>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

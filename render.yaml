@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: cineprime-movie-booking
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --no-input
+      python manage.py migrate
+      python create_superuser.py
+      python seed_data.py
+    startCommand: gunicorn moviebooking.wsgi --log-file -
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@cineprime.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true

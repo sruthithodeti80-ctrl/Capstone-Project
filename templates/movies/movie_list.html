@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Movies | CinePrime{% endblock %}
+{% block meta_description %}Browse all movies, search by genre, view now showing films and upcoming releases at CinePrime.{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Page Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-5 gap-3 fade-in">
+    <div>
+      <h1 class="font-heading fw-bold mb-1">Movie <span class="text-accent-red">Catalog</span></h1>
+      <p class="text-muted-custom mb-0">Discover the latest blockbusters and timeless classics</p>
+    </div>
+    <!-- Search Form -->
+    <form method="GET" action="{% url 'movie_list' %}" class="d-flex gap-2" id="searchForm">
+      <div class="input-group" style="min-width: 280px;">
+        <span class="input-group-text bg-dark border-secondary text-secondary">
+          <i class="bi bi-search"></i>
+        </span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control bg-dark border-secondary text-white" placeholder="Search movies, genres...">
+      </div>
+      {% if selected_genre %}<input type="hidden" name="genre" value="{{ selected_genre }}">{% endif %}
+      {% if selected_showing %}<input type="hidden" name="showing" value="{{ selected_showing }}">{% endif %}
+      <button type="submit" class="btn btn-gradient-red rounded px-3">Search</button>
+    </form>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="glass-card p-3 mb-4 fade-in">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="text-muted-custom small me-2"><i class="bi bi-funnel me-1"></i>Filter:</span>
+
+      <!-- Showing filter -->
+      <a href="{% url 'movie_list' %}{% if search_query %}?q={{ search_query }}{% endif %}"
+         class="btn btn-sm rounded-pill {% if not selected_showing %}btn-gradient-red{% else %}btn-outline-custom{% endif %} px-3">All</a>
+      <a href="{% url 'movie_list' %}?showing=now{% if search_query %}&q={{ search_query }}{% endif %}"
+         class="btn btn-sm rounded-pill {% if selected_showing == 'now' %}btn-gradient-red{% else %}btn-outline-custom{% endif %} px-3">
+        <i class="bi bi-camera-reels me-1"></i>Now Showing</a>
+      <a href="{% url 'movie_list' %}?showing=upcoming{% if search_query %}&q={{ search_query }}{% endif %}"
+         class="btn btn-sm rounded-pill {% if selected_showing == 'upcoming' %}btn-gradient-red{% else %}btn-outline-custom{% endif %} px-3">
+        <i class="bi bi-calendar-event me-1"></i>Upcoming</a>
+
+      <div class="vr border-secondary mx-1"></div>
+
+      <!-- Genre filters -->
+      {% for genre in genres %}
+      <a href="{% url 'movie_list' %}?genre={{ genre }}{% if selected_showing %}&showing={{ selected_showing }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+         class="btn btn-sm rounded-pill {% if selected_genre == genre %}btn-gradient-gold{% else %}btn-outline-custom{% endif %} px-3">
+        {{ genre }}</a>
+      {% endfor %}
+
+      {% if selected_genre or search_query or selected_showing %}
+      <a href="{% url 'movie_list' %}" class="btn btn-sm btn-outline-danger rounded-pill px-3 ms-auto">
+        <i class="bi bi-x-circle me-1"></i>Clear Filters</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Movie Grid -->
+  {% if movies %}
+  <div class="row g-4">
+    {% for movie in movies %}
+    <div class="col-lg-4 col-md-6 fade-in">
+      <div class="glass-card card-hover-effect h-100 overflow-hidden">
+        <!-- Poster -->
+        <div class="position-relative overflow-hidden" style="height: 320px;">
+          <img src="{{ movie.poster_url }}" class="w-100 h-100 object-fit-cover" alt="{{ movie.title }}"
+               onerror="this.src='https://via.placeholder.com/400x600/1e293b/ef4444?text={{ movie.title|urlencode }}'">
+          <!-- Overlay badges -->
+          <div class="position-absolute top-0 start-0 m-3">
+            {% if movie.is_now_showing %}
+            <span class="badge me-1" style="background:linear-gradient(135deg,#ef4444,#f97316);">NOW SHOWING</span>
+            {% else %}
+            <span class="badge bg-secondary me-1">UPCOMING</span>
+            {% endif %}
+          </div>
+          <div class="position-absolute top-0 end-0 m-3">
+            <span class="badge bg-dark bg-opacity-80 border border-secondary text-white">{{ movie.rating_class }}</span>
+          </div>
+          <!-- Rating overlay at bottom -->
+          <div class="position-absolute bottom-0 start-0 end-0 p-3" style="background:linear-gradient(to top, rgba(15,23,42,0.95), transparent);">
+            <div class="d-flex justify-content-between align-items-end">
+              <div>
+                {% for g in movie.genre_list %}
+                  <span class="badge genre-badge me-1 mb-1">{{ g }}</span>
+                {% endfor %}
+              </div>
+              <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-star-fill text-accent-gold"></i>
+                <span class="text-white fw-bold">{{ movie.average_rating }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card Body -->
+        <div class="p-4">
+          <h5 class="fw-bold text-white mb-1">{{ movie.title }}</h5>
+          <div class="d-flex flex-wrap gap-2 text-muted-custom small mb-3">
+            <span><i class="bi bi-clock me-1"></i>{{ movie.duration_minutes }} min</span>
+            <span><i class="bi bi-calendar me-1"></i>{{ movie.release_date|date:"M d, Y" }}</span>
+          </div>
+          <p class="text-muted-custom small mb-4">{{ movie.description|truncatewords:18 }}</p>
+          <div class="d-flex gap-2">
+            <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-sm btn-outline-custom rounded-pill px-3 flex-grow-1">
+              <i class="bi bi-info-circle me-1"></i>Details
+            </a>
+            {% with movie.showtimes.first as st %}
+              {% if st %}
+              <a href="{% url 'seat_booking' st.pk %}" class="btn btn-sm btn-gradient-red rounded-pill px-3 flex-grow-1">
+                <i class="bi bi-ticket-perforated me-1"></i>Book
+              </a>
+              {% else %}
+              <button class="btn btn-sm btn-secondary rounded-pill px-3 flex-grow-1" disabled>No Shows</button>
+              {% endif %}
+            {% endwith %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <div class="d-flex justify-content-center mt-5">
+    <nav aria-label="Movie pagination">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link bg-dark border-secondary text-white" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_genre %}&genre={{ selected_genre }}{% endif %}{% if selected_showing %}&showing={{ selected_showing }}{% endif %}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active">
+            <span class="page-link" style="background: linear-gradient(135deg,#ef4444,#f97316); border-color:transparent;">{{ num }}</span>
+          </li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link bg-dark border-secondary text-white" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_genre %}&genre={{ selected_genre }}{% endif %}{% if selected_showing %}&showing={{ selected_showing }}{% endif %}">{{ num }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link bg-dark border-secondary text-white" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_genre %}&genre={{ selected_genre }}{% endif %}{% if selected_showing %}&showing={{ selected_showing }}{% endif %}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="text-center py-5 fade-in">
+    <i class="bi bi-camera-video-off text-accent-red" style="font-size: 4rem;"></i>
+    <h4 class="mt-3 text-white">No Movies Found</h4>
+    <p class="text-muted-custom">Try adjusting your search or filters</p>
+    <a href="{% url 'movie_list' %}" class="btn btn-gradient-red rounded-pill px-4 mt-2">Clear Filters</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
